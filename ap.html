@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FTC Advancement Points Calculator presented by 19600 Treeman 树人</title>
+<style>
+  :root {
+    --bg: #f1f8f2;
+    --card: #ffffff;
+    --text: #16281c;
+    --muted: #64806e;
+    --border: #d9e8dd;
+    --field: #f4faf5;
+    --accent: #17803d;
+    --accent-strong: #0f6b31;
+    --accent-soft: rgba(23, 128, 61, .10);
+    --gold-bg: #fff4c2;
+    --gold-bg-hover: #ffec9e;
+    --gold-line: #e3b100;
+    --gold-text: #8a6400;
+    --danger: #c0392b;
+    --warn: #b26a00;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--text);
+    background-color: var(--bg);
+    background-image: radial-gradient(1100px 460px at 50% -240px, rgba(23, 128, 61, .13), transparent 70%);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 0 16px 60px; }
+
+  /* ---------- Header ---------- */
+  .hero { padding: 30px 4px 20px; }
+  .hero h1 { margin: 0 0 6px; font-size: 26px; letter-spacing: -.02em; color: var(--accent-strong); }
+  .hero p { margin: 0; color: var(--muted); font-size: 14px; max-width: 820px; }
+
+  /* ---------- Layout ---------- */
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 250px;
+    gap: 16px;
+    align-items: start;
+  }
+  .main-col { min-width: 0; }
+  .side-col { position: sticky; top: 16px; }
+
+  /* ---------- Cards ---------- */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 2px rgba(16, 40, 24, .04), 0 10px 30px -22px rgba(16, 40, 24, .35);
+  }
+  .card-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap; margin-bottom: 12px;
+  }
+  .card-head h2 { margin: 0; font-size: 15px; letter-spacing: .01em; }
+  .count { color: var(--muted); font-size: 13px; font-weight: 500; margin-left: 8px; }
+
+  /* ---------- Controls ---------- */
+  .btn {
+    appearance: none; border: 1px solid transparent; background: var(--accent); color: #fff;
+    font: inherit; font-size: 13px; font-weight: 600; padding: 7px 13px; border-radius: 8px;
+    cursor: pointer; white-space: nowrap; transition: background .12s, border-color .12s, color .12s;
+  }
+  .btn:hover { background: var(--accent-strong); }
+  .btn.ghost { background: var(--field); color: var(--text); border-color: var(--border); }
+  .btn.ghost:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .btn.danger { color: var(--danger); }
+  .btn.danger:hover { background: rgba(192, 57, 43, .10); border-color: var(--danger); color: var(--danger); }
+
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  select, input[type="number"], input[type="text"], textarea {
+    font: inherit; color: var(--text); background: var(--field);
+    border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px;
+  }
+  select:focus, input:focus, textarea:focus {
+    outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .sortbox { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); }
+
+  .settings-row { display: flex; align-items: flex-end; gap: 22px; flex-wrap: wrap; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .field input { width: 130px; }
+  .field input.small { width: 92px; }
+  .switch { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); cursor: pointer; user-select: none; }
+  .switch input { accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer; }
+  .hint { font-size: 12.5px; color: var(--muted); }
+  .gold-dot {
+    display: inline-block; width: 12px; height: 12px; border-radius: 3px;
+    background: var(--gold-bg); border: 1px solid var(--gold-line);
+    vertical-align: -2px; margin-right: 5px;
+  }
+
+  /* ---------- Import panel ---------- */
+  .import-panel {
+    display: flex; flex-direction: column; gap: 10px;
+    background: var(--field); border: 1px dashed var(--border);
+    border-radius: 10px; padding: 14px; margin-bottom: 14px;
+  }
+  .import-panel[hidden] { display: none; }
+  .import-panel label { font-size: 13px; color: var(--muted); }
+  .import-panel code { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 1px 4px; font-size: 12px; }
+  .import-panel textarea { width: 100%; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
+  .import-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+  /* ---------- Table ---------- */
+  .table-wrap { overflow-x: auto; margin: 0 -18px; padding: 0 18px; }
+  table { width: 100%; min-width: 820px; border-collapse: collapse; }
+
+  thead th {
+    font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em;
+    color: var(--muted); font-weight: 700; text-align: left;
+    padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  thead th[data-sort] { cursor: pointer; user-select: none; }
+  thead th[data-sort]:hover { color: var(--accent); }
+  thead th.sorted-asc, thead th.sorted-desc { color: var(--accent); }
+  thead th.sorted-asc::after { content: " ▲"; font-size: 9px; }
+  thead th.sorted-desc::after { content: " ▼"; font-size: 9px; }
+
+  tbody td { padding: 5px 10px; border-bottom: 1px solid var(--border); }
+  tbody tr:hover { background: var(--accent-soft); }
+  tbody tr.row-advanced { background: var(--gold-bg); box-shadow: inset 3px 0 0 var(--gold-line); }
+  tbody tr.row-advanced:hover { background: var(--gold-bg-hover); }
+  tbody tr:last-child td { border-bottom: none; }
+
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  th.num { text-align: right; }
+
+  .c-team { width: 118px; }
+  .c-rank { width: 86px; }
+  .c-qual { width: 92px; }
+  .c-all { width: 100px; }
+  .c-po { width: 104px; }
+  .c-award { width: 92px; }
+  .c-del { width: 42px; text-align: center; }
+
+  .in {
+    width: 100%; min-width: 56px; padding: 6px 8px; border-radius: 6px;
+    background: transparent; border: 1px solid transparent; color: inherit; font: inherit;
+    font-variant-numeric: tabular-nums;
+  }
+  .in:hover { border-color: var(--border); background: var(--field); }
+  .in:focus {
+    outline: none; border-color: var(--accent); background: var(--field);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+
+  .cell-qual { font-weight: 600; }
+  .cell-total { font-weight: 700; color: var(--accent); }
+  tr.row-advanced .cell-total { color: var(--gold-text); }
+  .muted { color: var(--muted); font-weight: 400; }
+  .warn { color: var(--warn); }
+
+  .del {
+    border: none; background: transparent; color: var(--muted); cursor: pointer;
+    font-size: 14px; padding: 4px 6px; border-radius: 6px; line-height: 1;
+  }
+  .del:hover { color: var(--danger); background: rgba(192, 57, 43, .12); }
+
+  .empty { text-align: center; color: var(--muted); padding: 26px 10px; font-size: 13.5px; }
+  .empty[hidden] { display: none; }
+
+  /* ---------- Awards panel ---------- */
+  .awards-card { padding-bottom: 12px; }
+  .awards-card h2 { margin: 0 0 2px; font-size: 15px; }
+  .award-list { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  .award-btn {
+    width: 100%; text-align: left; font: inherit; font-size: 13.5px; font-weight: 500;
+    padding: 8px 12px; border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--field); color: var(--text);
+    transition: border-color .12s, color .12s, background .12s;
+  }
+  .award-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .award-btn.struck {
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+    text-decoration-color: var(--accent);
+    color: var(--muted);
+    border-style: dashed;
+    background: transparent;
+  }
+  .award-btn.struck:hover { color: var(--muted); border-color: var(--accent); background: var(--accent-soft); }
+  .awards-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+  .link-btn {
+    border: none; background: none; padding: 0; cursor: pointer;
+    font: inherit; font-size: 12.5px; font-weight: 600; color: var(--accent);
+    text-decoration: underline; text-underline-offset: 2px;
+  }
+  .link-btn:hover { color: var(--accent-strong); }
+
+  /* ---------- Qualification table ---------- */
+  details.card summary {
+    cursor: pointer; font-size: 15px; font-weight: 600; list-style: none;
+    display: flex; align-items: center; gap: 8px; user-select: none;
+  }
+  details.card summary::-webkit-details-marker { display: none; }
+  details.card summary::before { content: "▸"; color: var(--accent); font-size: 12px; transition: transform .15s; }
+  details.card[open] summary::before { transform: rotate(90deg); }
+  details.card summary span { color: var(--accent); }
+
+  .qual-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+    gap: 6px; margin-top: 16px;
+  }
+  .qual-chip {
+    display: flex; justify-content: space-between; gap: 8px;
+    background: var(--field); border: 1px solid var(--border);
+    border-radius: 8px; padding: 5px 9px; font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+  }
+  .qual-chip .r { color: var(--muted); }
+  .qual-chip .p { font-weight: 700; }
+
+  .foot { color: var(--muted); font-size: 12.5px; padding: 6px 4px; line-height: 1.7; }
+  .foot sup { font-size: 10px; }
+
+  @media (max-width: 940px) {
+    .layout { grid-template-columns: minmax(0, 1fr); }
+    .side-col { position: static; }
+    .award-list { flex-direction: row; flex-wrap: wrap; }
+    .award-list li { flex: 1 1 130px; }
+  }
+  @media (max-width: 620px) {
+    .hero h1 { font-size: 21px; }
+    .card { padding: 14px; }
+    .table-wrap { margin: 0 -14px; padding: 0 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <h1>FTC Advancement Points Calculator presented by 19600 Treeman 树人</h1>
+  </header>
+
+  <div class="layout">
+    <div class="main-col">
+
+      <!-- ===== Event settings ===== -->
+      <section class="card">
+        <div class="card-head"><h2>Event settings</h2></div>
+        <div class="settings-row">
+          <div class="field">
+            <label for="nInput">Total participants (N)</label>
+            <input id="nInput" type="number" min="1" step="1" />
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="autoN" checked />
+            <span>Auto — use number of teams in the list</span>
+          </label>
+          <div class="field">
+            <label for="advanceInput">Teams advancing</label>
+            <input id="advanceInput" class="small" type="number" min="0" step="1" value="3" />
+          </div>
+          <div class="hint" id="nHint"></div>
+        </div>
+        <p class="hint" style="margin:12px 0 0">
+          <span class="gold-dot"></span>The top <b id="advanceHint">3</b> teams by total points are highlighted in gold (tie-breaks included).
+        </p>
+      </section>
+
+      <!-- ===== Teams ===== -->
+      <section class="card">
+        <div class="card-head">
+          <h2>Teams <span class="count" id="teamCount"></span></h2>
+          <div class="toolbar">
+            <label class="sortbox">
+              Sort by
+              <select id="sortKey">
+                <option value="total">Total points</option>
+                <option value="number">Team number</option>
+                <option value="rank">Rank</option>
+                <option value="qual">Qualification pts</option>
+                <option value="alliancePts">Alliance pts</option>
+                <option value="playoffPts">Playoff pts</option>
+                <option value="award">Award pts</option>
+              </select>
+            </label>
+            <button id="sortDirBtn" class="btn ghost" type="button">↓ Desc</button>
+            <button id="addBtn" class="btn" type="button">+ Add team</button>
+            <button id="importBtn" class="btn ghost" type="button">Import</button>
+            <button id="exportBtn" class="btn ghost" type="button">Export CSV</button>
+            <button id="clearBtn" class="btn ghost danger" type="button">Clear all</button>
+          </div>
+        </div>
+
+        <div id="importPanel" class="import-panel" hidden>
+          <label for="importText">
+            Paste teams — one per line. Optional extra columns:
+            <code>team, rank, alliance, playoff level, award pts</code>
+          </label>
+          <textarea id="importText" rows="6" spellcheck="false"
+            placeholder="12345&#10;67890, 3&#10;11111, 1, 2, 4, 10"></textarea>
+          <div class="import-actions">
+            <button id="doImport" class="btn" type="button">Import</button>
+            <button id="cancelImport" class="btn ghost" type="button">Cancel</button>
+            <label class="switch"><input type="checkbox" id="replaceImport" /><span>Replace existing list</span></label>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table id="teamTable">
+            <thead>
+              <tr>
+                <th class="c-team" data-sort="number">Team #</th>
+                <th class="c-rank" data-sort="rank">Rank</th>
+                <th class="c-qual num" data-sort="qual">Qual pts</th>
+                <th class="c-all num">Alliance #</th>
+                <th class="c-all num" data-sort="alliancePts">Alliance pts</th>
+                <th class="c-po num">Playoff lvl</th>
+                <th class="c-po num" data-sort="playoffPts">Playoff pts</th>
+                <th class="c-award num" data-sort="award">Awards</th>
+                <th class="c-all num" data-sort="total">Total</th>
+                <th class="c-del"></th>
+              </tr>
+            </thead>
+            <tbody id="teamBody"></tbody>
+          </table>
+          <div id="emptyState" class="empty">No teams yet — click <b>+ Add team</b> or <b>Import</b> to get started.</div>
+        </div>
+      </section>
+
+      <!-- ===== Qualification point table ===== -->
+      <details class="card" id="qualCard">
+        <summary>Qualification points by rank (N = <span id="qualN">0</span>)</summary>
+        <div class="qual-grid" id="qualGrid"></div>
+      </details>
+
+      <footer class="foot">
+        <p>
+          <b>Qual pts</b> = ceil( erfinv((N − 2R + 2) / (1.07·N)) × 7 / erfinv(1/1.07) + 9 ) &nbsp;·&nbsp;
+          <b>Alliance pts</b> = 21 − alliance # (0 if none) &nbsp;·&nbsp;
+          <b>Playoff pts</b> = 80 / 2<sup>level</sup> (0 if none) &nbsp;·&nbsp;
+          <b>Total</b> = qual + alliance + playoff + award.
+        </p>
+        <p>
+          When sorting by <b>total points</b>, ties are broken by: award points → playoff points → alliance points → higher qualification rank (smaller rank number).
+        </p>
+      </footer>
+    </div>
+
+    <!-- ===== Awards sidebar ===== -->
+    <aside class="side-col">
+      <section class="card awards-card">
+        <h2>Awards</h2>
+        <p class="hint" style="margin:0">Click an award to strike it through.</p>
+        <ul class="award-list" id="awardList"></ul>
+        <div class="awards-foot">
+          <button class="link-btn" type="button" id="clearAwards">Reset strikes</button>
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   MATH — inverse error function (Mike Giles' approximation)
+   ========================================================= */
+function erfinv(x) {
+  if (x <= -1) return -Infinity;
+  if (x >= 1) return Infinity;
+  if (x === 0) return 0;
+
+  let w = -Math.log((1 - x) * (1 + x));
+  let p;
+
+  if (w < 5) {
+    w -= 2.5;
+    p = 2.81022636e-08;
+    p = 3.43273939e-07 + p * w;
+    p = -3.5233877e-06 + p * w;
+    p = -4.39150654e-06 + p * w;
+    p = 0.00021858087 + p * w;
+    p = -0.00125372503 + p * w;
+    p = -0.00417768164 + p * w;
+    p = 0.246640727 + p * w;
+    p = 1.50140941 + p * w;
+  } else {
+    w = Math.sqrt(w) - 3;
+    p = -0.000200214257;
+    p = 0.000100950558 + p * w;
+    p = 0.00134934322 + p * w;
+    p = -0.00367342844 + p * w;
+    p = 0.00573950773 + p * w;
+    p = -0.0076224613 + p * w;
+    p = 0.00943887047 + p * w;
+    p = 1.00167406 + p * w;
+    p = 2.83297682 + p * w;
+  }
+  return p * x;
+}
+
+const QUAL_SCALE = 7 / erfinv(1 / 1.07);   // 7 / erfinv(1/1.07)
+
+/**
+ * Same algorithm as the Python reference implementation.
+ * Returns null when the rank is out of range (so the UI can warn).
+ */
+function qualificationPoints(R, N) {
+  if (!Number.isFinite(R) || !Number.isFinite(N) || N <= 0) return null;
+  if (R < 1 || R > N) return null;
+  const arg = (N - 2 * R + 2) / (1.07 * N);
+  if (!(arg > -1 && arg < 1)) return null;
+  // the tiny epsilon protects the ceiling from floating point noise
+  return Math.ceil(erfinv(arg) * QUAL_SCALE + 9 - 1e-9);
+}
+
+/* =========================================================
+   STATE
+   ========================================================= */
+const STORAGE_KEY = "ftc-advancement-points-v2";
+const AWARDS = ["Judges", "Design", "Reach", "Control", "Innovate", "Sustain", "Connect", "Think", "Inspire"];
+const EPS = 1e-9;
+
+const state = {
+  teams: [],          // { id, number, rank, alliance, playoff, award }
+  autoN: true,
+  manualN: "",        // string as typed
+  advanceCount: "3",  // string as typed
+  sortKey: "total",
+  sortDir: "desc",
+  struckAwards: []    // award names
+};
+
+const uid = () => "t" + Math.random().toString(36).slice(2, 10);
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+const $ = (sel) => document.querySelector(sel);
+
+function esc(s) {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function fmt(n) {
+  if (!Number.isFinite(n)) return "—";
+  const r = Math.round(n * 1000) / 1000;
+  return String(r);
+}
+
+function num(v) { return parseFloat(v); }
+
+function getN() {
+  if (state.autoN) return state.teams.length;
+  const n = parseInt(state.manualN, 10);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+function getAdvanceCount() {
+  const n = parseInt(state.advanceCount, 10);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+/** Computes all derived values for one team. */
+function computeTeam(t, N) {
+  const rank = num(t.rank);
+  const qual = qualificationPoints(rank, N);
+
+  const allNum = num(t.alliance);
+  const alliancePts = Number.isFinite(allNum) && allNum > 0 ? 21 - allNum : 0;
+
+  const po = num(t.playoff);
+  const playoffPts = Number.isFinite(po) && po > 0 ? 80 / Math.pow(2, po) : 0;
+
+  const award = num(t.award);
+  const awardPts = Number.isFinite(award) ? award : 0;
+
+  const q = qual === null ? 0 : qual;
+
+  return {
+    qual: q,
+    qualValid: qual !== null,
+    alliancePts,
+    playoffPts,
+    award: awardPts,
+    total: q + alliancePts + playoffPts + awardPts
+  };
+}
+
+function neq(a, b) { return Math.abs(a - b) > EPS; }
+
+/* =========================================================
+   RANKING (total points + tie-breakers)
+   ========================================================= */
+/**
+ * Total ranking order: total desc, then award desc, playoff desc,
+ * alliance desc, then qualification rank asc (higher rank = smaller number).
+ * Team number is the final deterministic fallback.
+ */
+function compareTotal(a, b, N) {
+  const ca = computeTeam(a, N);
+  const cb = computeTeam(b, N);
+
+  if (neq(cb.total, ca.total)) return cb.total - ca.total;
+  if (neq(cb.award, ca.award)) return cb.award - ca.award;
+  if (neq(cb.playoffPts, ca.playoffPts)) return cb.playoffPts - ca.playoffPts;
+  if (neq(cb.alliancePts, ca.alliancePts)) return cb.alliancePts - ca.alliancePts;
+
+  // Higher qualification rank (smaller number) goes up; blanks sink.
+  const ra = num(a.rank), rb = num(b.rank);
+  const raOk = Number.isFinite(ra), rbOk = Number.isFinite(rb);
+  if (raOk && rbOk && ra !== rb) return ra - rb;
+  if (raOk && !rbOk) return -1;
+  if (!raOk && rbOk) return 1;
+
+  // Deterministic final tie-break.
+  const na = num(a.number), nb = num(b.number);
+  const naOk = Number.isFinite(na), nbOk = Number.isFinite(nb);
+  if (naOk && nbOk && na !== nb) return na - nb;
+  if (naOk && !nbOk) return -1;
+  if (!naOk && nbOk) return 1;
+  return 0;
+}
+
+function sortedTeams(N) {
+  const key = state.sortKey;
+  const dir = state.sortDir === "asc" ? 1 : -1;
+  const cache = new Map();
+  const get = (t) => {
+    let c = cache.get(t.id);
+    if (!c) { c = computeTeam(t, N); cache.set(t.id, c); }
+    return c;
+  };
+
+  return state.teams.slice().sort((a, b) => {
+    // Total points uses the full tie-break chain.
+    if (key === "total") return compareTotal(a, b, N) * dir;
+
+    let va, vb;
+    const ca = get(a), cb = get(b);
+    switch (key) {
+      case "number": va = num(a.number); vb = num(b.number); break;
+      case "rank": va = num(a.rank); vb = num(b.rank); break;
+      case "qual": va = ca.qual; vb = cb.qual; break;
+      case "alliancePts": va = ca.alliancePts; vb = cb.alliancePts; break;
+      case "playoffPts": va = ca.playoffPts; vb = cb.playoffPts; break;
+      case "award": va = ca.award; vb = cb.award; break;
+      default: va = ca.total; vb = cb.total;
+    }
+
+    const vaOk = Number.isFinite(va), vbOk = Number.isFinite(vb);
+    if (!vaOk && !vbOk) { /* fall through to team number */ }
+    else if (!vaOk) return 1;             // blanks always sink
+    else if (!vbOk) return -1;
+    else if (va !== vb) return (va - vb) * dir;
+
+    // Stable tie-break: team number ascending.
+    const na = num(a.number), nb = num(b.number);
+    const naOk = Number.isFinite(na), nbOk = Number.isFinite(nb);
+    if (naOk && nbOk && na !== nb) return na - nb;
+    if (naOk && !nbOk) return -1;
+    if (!naOk && nbOk) return 1;
+    return 0;
+  });
+}
+
+/** Ids of the teams currently in the advancing (golden) positions. */
+function advancedIds(N) {
+  const n = getAdvanceCount();
+  const set = new Set();
+  if (!n || !state.teams.length) return set;
+  const ranked = state.teams.slice().sort((a, b) => compareTotal(a, b, N));
+  const lim = Math.min(n, ranked.length);
+  for (let i = 0; i < lim; i++) set.add(ranked[i].id);
+  return set;
+}
+
+/* =========================================================
+   PERSISTENCE
+   ========================================================= */
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (Array.isArray(s.teams)) {
+      state.teams = s.teams.map((t) => ({
+        id: t.id || uid(),
+        number: t.number ?? "",
+        rank: t.rank ?? "",
+        alliance: t.alliance ?? "",
+        playoff: t.playoff ?? "",
+        award: t.award ?? ""
+      }));
+    }
+    if (typeof s.autoN === "boolean") state.autoN = s.autoN;
+    if (typeof s.manualN === "string") state.manualN = s.manualN;
+    else if (s.manualN != null) state.manualN = String(s.manualN);
+    if (typeof s.advanceCount === "string") state.advanceCount = s.advanceCount;
+    else if (s.advanceCount != null) state.advanceCount = String(s.advanceCount);
+    if (typeof s.sortKey === "string") state.sortKey = s.sortKey;
+    if (s.sortDir === "asc" || s.sortDir === "desc") state.sortDir = s.sortDir;
+    if (Array.isArray(s.struckAwards)) {
+      state.struckAwards = s.struckAwards.filter((a) => AWARDS.includes(a));
+    }
+  } catch (e) { /* ignore corrupt storage */ }
+}
+
+/* =========================================================
+   RENDERING
+   ========================================================= */
+function makeRow(t) {
+  const tr = document.createElement("tr");
+  tr.dataset.id = t.id;
+  tr.innerHTML =
+    '<td class="c-team"><input class="in" type="number" inputmode="numeric" data-field="number" value="' + esc(t.number) + '" placeholder="12345" aria-label="Team number"></td>' +
+    '<td class="c-rank"><input class="in" type="number" inputmode="numeric" min="1" data-field="rank" value="' + esc(t.rank) + '" placeholder="–" aria-label="Rank"></td>' +
+    '<td class="num cell-qual" data-cell="qual"></td>' +
+    '<td class="c-all"><input class="in" type="number" inputmode="numeric" min="0" data-field="alliance" value="' + esc(t.alliance) + '" placeholder="0" aria-label="Alliance number"></td>' +
+    '<td class="num" data-cell="alliancePts"></td>' +
+    '<td class="c-po"><input class="in" type="number" inputmode="numeric" min="0" data-field="playoff" value="' + esc(t.playoff) + '" placeholder="0" aria-label="Playoff level"></td>' +
+    '<td class="num" data-cell="playoffPts"></td>' +
+    '<td class="c-award"><input class="in" type="number" inputmode="numeric" data-field="award" value="' + esc(t.award) + '" placeholder="0" aria-label="Award points"></td>' +
+    '<td class="num cell-total" data-cell="total"></td>' +
+    '<td class="c-del"><button class="del" type="button" title="Remove team" aria-label="Remove team">✕</button></td>';
+  return tr;
+}
+
+function renderRows() {
+  const N = getN();
+  const tbody = $("#teamBody");
+  const frag = document.createDocumentFragment();
+
+  for (const t of sortedTeams(N)) frag.appendChild(makeRow(t));
+
+  tbody.innerHTML = "";
+  tbody.appendChild(frag);
+
+  $("#emptyState").hidden = state.teams.length > 0;
+  $("#teamCount").textContent = state.teams.length
+    ? state.teams.length + (state.teams.length === 1 ? " team" : " teams")
+    : "";
+
+  updateComputed();
+}
+
+/** Recomputes every derived cell + the golden highlight without touching inputs. */
+function updateComputed() {
+  const N = getN();
+  const tbody = $("#teamBody");
+  const goldIds = advancedIds(N);
+
+  for (const tr of Array.from(tbody.children)) {
+    const t = state.teams.find((x) => x.id === tr.dataset.id);
+    if (!t) continue;
+
+    const c = computeTeam(t, N);
+    const qCell = tr.querySelector('[data-cell="qual"]');
+    const rankStr = String(t.rank ?? "").trim();
+
+    if (c.qualValid) {
+      qCell.textContent = c.qual;
+      qCell.className = "num cell-qual";
+      qCell.removeAttribute("title");
+    } else if (rankStr === "") {
+      qCell.textContent = "0";
+      qCell.className = "num cell-qual muted";
+      qCell.title = "No rank entered";
+    } else {
+      qCell.textContent = "—";
+      qCell.className = "num cell-qual warn";
+      qCell.title = N
+        ? "Rank must be a whole number between 1 and " + N
+        : "Set N (total participants) first";
+    }
+
+    tr.querySelector('[data-cell="alliancePts"]').textContent = fmt(c.alliancePts);
+    tr.querySelector('[data-cell="playoffPts"]').textContent = fmt(c.playoffPts);
+    tr.querySelector('[data-cell="total"]').textContent = fmt(c.total);
+
+    tr.classList.toggle("row-advanced", goldIds.has(t.id));
+  }
+}
+
+function renderQualGrid() {
+  const N = getN();
+  const grid = $("#qualGrid");
+  $("#qualN").textContent = N;
+
+  if (!N) {
+    grid.innerHTML = '<p class="hint">Add teams (or set N manually) to see the qualification point table.</p>';
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
+  for (let r = 1; r <= N; r++) {
+    const pts = qualificationPoints(r, N);
+    const chip = document.createElement("div");
+    chip.className = "qual-chip";
+    chip.innerHTML = '<span class="r">#' + r + '</span><span class="p">' + (pts === null ? "—" : pts) + '</span>';
+    frag.appendChild(chip);
+  }
+  grid.innerHTML = "";
+  grid.appendChild(frag);
+}
+
+function renderAwards() {
+  const list = $("#awardList");
+  list.innerHTML = "";
+  for (const name of AWARDS) {
+    const struck = state.struckAwards.includes(name);
+    const li = document.createElement("li");
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "award-btn" + (struck ? " struck" : "");
+    btn.dataset.award = name;
+    btn.textContent = name;
+    btn.setAttribute("aria-pressed", struck ? "true" : "false");
+    btn.title = struck ? "Click to un-strike " + name : "Click to strike through " + name;
+    li.appendChild(btn);
+    list.appendChild(li);
+  }
+}
+
+function syncN() {
+  const input = $("#nInput");
+  input.disabled = state.autoN;
+  input.value = state.autoN ? getN() : state.manualN;
+
+  const hint = $("#nHint");
+  if (state.autoN) {
+    hint.textContent = "N is locked to the number of teams in the list.";
+  } else {
+    const n = getN();
+    hint.textContent = n > 0 ? "N = " + n + " (manual)." : "Enter the total number of participants.";
+  }
+
+  const adv = getAdvanceCount();
+  $("#advanceHint").textContent = adv || 0;
+}
+
+function updateSortUI() {
+  document.querySelectorAll("th[data-sort]").forEach((th) => {
+    th.classList.remove("sorted-asc", "sorted-desc");
+    if (th.dataset.sort === state.sortKey) {
+      th.classList.add(state.sortDir === "asc" ? "sorted-asc" : "sorted-desc");
+    }
+  });
+  $("#sortKey").value = state.sortKey;
+  $("#sortDirBtn").textContent = state.sortDir === "asc" ? "↑ Asc" : "↓ Desc";
+}
+
+function renderAll() {
+  syncN();
+  renderRows();
+  renderQualGrid();
+  renderAwards();
+  updateSortUI();
+  save();
+}
+
+/* =========================================================
+   TEAM ACTIONS
+   ========================================================= */
+function addTeam(data) {
+  const t = {
+    id: uid(),
+    number: data?.number ?? "",
+    rank: data?.rank ?? "",
+    alliance: data?.alliance ?? "",
+    playoff: data?.playoff ?? "",
+    award: data?.award ?? ""
+  };
+  state.teams.push(t);
+  return t;
+}
+
+function addTeamAndFocus() {
+  const t = addTeam();
+  renderAll();
+  const inp = document.querySelector('tr[data-id="' + t.id + '"] input[data-field="number"]');
+  if (inp) inp.focus();
+}
+
+function download(filename, text) {
+  const blob = new Blob([text], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* =========================================================
+   EVENT WIRING
+   ========================================================= */
+// --- N / auto toggle ---
+$("#autoN").addEventListener("change", (e) => {
+  state.autoN = e.target.checked;
+  if (!state.autoN && !state.manualN) state.manualN = String(state.teams.length || "");
+  renderAll();
+});
+
+$("#nInput").addEventListener("input", (e) => {
+  state.manualN = e.target.value;
+  updateComputed();
+  renderQualGrid();
+  save();
+});
+
+// --- Teams advancing (golden highlight) ---
+$("#advanceInput").addEventListener("input", (e) => {
+  state.advanceCount = e.target.value;
+  $("#advanceHint").textContent = getAdvanceCount();
+  updateComputed();
+  save();
+});
+
+// --- Toolbar ---
+$("#addBtn").addEventListener("click", addTeamAndFocus);
+
+$("#sortKey").addEventListener("change", (e) => {
+  state.sortKey = e.target.value;
+  renderAll();
+});
+
+$("#sortDirBtn").addEventListener("click", () => {
+  state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
+  renderAll();
+});
+
+document.querySelectorAll("th[data-sort]").forEach((th) => {
+  th.addEventListener("click", () => {
+    const key = th.dataset.sort;
+    if (state.sortKey === key) {
+      state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
+    } else {
+      state.sortKey = key;
+      state.sortDir = (key === "number" || key === "rank") ? "asc" : "desc";
+    }
+    renderAll();
+  });
+});
+
+// --- Import / export / clear ---
+$("#importBtn").addEventListener("click", () => {
+  const panel = $("#importPanel");
+  panel.hidden = !panel.hidden;
+  if (!panel.hidden) $("#importText").focus();
+});
+
+$("#cancelImport").addEventListener("click", () => {
+  $("#importPanel").hidden = true;
+});
+
+$("#doImport").addEventListener("click", () => {
+  const text = $("#importText").value || "";
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+
+  const parsed = [];
+  for (const line of lines) {
+    const parts = line.split(/[,\t;]+/).map((s) => s.trim());
+    if (!parts[0]) continue;
+    parsed.push({
+      number: parts[0],
+      rank: parts[1] || "",
+      alliance: parts[2] || "",
+      playoff: parts[3] || "",
+      award: parts[4] || ""
+    });
+  }
+
+  if (!parsed.length) return;
+  if ($("#replaceImport").checked) state.teams = [];
+  parsed.forEach((p) => addTeam(p));
+
+  $("#importText").value = "";
+  $("#replaceImport").checked = false;
+  $("#importPanel").hidden = true;
+  renderAll();
+});
+
+$("#exportBtn").addEventListener("click", () => {
+  const N = getN();
+  const goldIds = advancedIds(N);
+  const header = ["Team", "Rank", "QualPts", "AllianceNum", "AlliancePts", "PlayoffLevel", "PlayoffPts", "AwardPts", "Total", "Advancing"];
+  const rows = [header.join(",")];
+
+  for (const t of sortedTeams(N)) {
+    const c = computeTeam(t, N);
+    rows.push([
+      t.number, t.rank,
+      c.qualValid ? c.qual : "",
+      t.alliance, fmt(c.alliancePts),
+      t.playoff, fmt(c.playoffPts),
+      fmt(c.award), fmt(c.total),
+      goldIds.has(t.id) ? "yes" : ""
+    ].join(","));
+  }
+
+  download("ftc-advancement-points.csv", rows.join("\n"));
+});
+
+$("#clearBtn").addEventListener("click", () => {
+  if (!state.teams.length) return;
+  if (!confirm("Remove all " + state.teams.length + " teams from the list?")) return;
+  state.teams = [];
+  renderAll();
+});
+
+// --- Awards sidebar ---
+$("#awardList").addEventListener("click", (e) => {
+  const btn = e.target.closest(".award-btn");
+  if (!btn) return;
+  const name = btn.dataset.award;
+  const i = state.struckAwards.indexOf(name);
+  if (i === -1) state.struckAwards.push(name);
+  else state.struckAwards.splice(i, 1);
+  renderAwards();
+  save();
+});
+
+$("#clearAwards").addEventListener("click", () => {
+  if (!state.struckAwards.length) return;
+  state.struckAwards = [];
+  renderAwards();
+  save();
+});
+
+// --- Table editing (delegated) ---
+$("#teamBody").addEventListener("input", (e) => {
+  const field = e.target.dataset?.field;
+  if (!field) return;
+
+  const tr = e.target.closest("tr[data-id]");
+  if (!tr) return;
+
+  const t = state.teams.find((x) => x.id === tr.dataset.id);
+  if (!t) return;
+
+  t[field] = e.target.value;
+  updateComputed();
+  save();
+});
+
+$("#teamBody").addEventListener("click", (e) => {
+  const btn = e.target.closest(".del");
+  if (!btn) return;
+  const tr = btn.closest("tr[data-id]");
+  if (!tr) return;
+  state.teams = state.teams.filter((x) => x.id !== tr.dataset.id);
+  renderAll();
+});
+
+// Enter on the last row adds a new team (fast data entry)
+$("#teamBody").addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return;
+  const tr = e.target.closest("tr[data-id]");
+  if (!tr) return;
+
+  const rows = Array.from($("#teamBody").children);
+  if (rows[rows.length - 1] === tr) {
+    e.preventDefault();
+    addTeamAndFocus();
+  }
+});
+
+/* =========================================================
+   BOOT
+   ========================================================= */
+load();
+renderAll();
+</script>
+</body>
+</html>
