@@ -318,7 +318,7 @@
                 <option value="number">Team number</option>
                 <option value="rank">Rank</option>
                 <option value="qual">Qualification pts</option>
-                <option value="alliancePts">Alliance pts</option>
+                <option value="alliancePts">All. pts</option>
                 <option value="playoffPts">Playoff pts</option>
                 <option value="award">Award pts</option>
               </select>
@@ -350,14 +350,14 @@
             <thead>
               <tr>
                 <th class="c-team" data-sort="number">Team #</th>
-                <th class="c-check">Already advanced</th>
+                <th class="c-check">Advanced</th>
                 <th class="c-rank" data-sort="rank">Rank</th>
                 <th class="c-qual num" data-sort="qual">Qual pts</th>
                 <th class="c-all num">Alliance #</th>
-                <th class="c-all num" data-sort="alliancePts">All. pts</th>
-                <th class="c-po num">Playoff</th>
+                <th class="c-all num" data-sort="alliancePts">Alliance pts</th>
+                <th class="c-po num">Playoff lvl</th>
                 <th class="c-po num" data-sort="playoffPts">Playoff pts</th>
-                <th class="c-award num" data-sort="award">Awards pts</th>
+                <th class="c-award num" data-sort="award">Awards</th>
                 <th class="c-all num" data-sort="total">Total</th>
                 <th class="c-del"></th>
               </tr>
@@ -385,7 +385,7 @@
           When sorting by <b>total points</b>, ties are broken by: award points → playoff points → alliance points → higher qualification rank (smaller rank number).
         </p>
         <p>
-          For advancement, teams marked <b>already advanced</b> are skipped and do not use a slot. Of the remaining teams the top <b>y</b> are highlighted gold, and the next <b>x − y</b> are highlighted bronze.
+          For advancement, teams marked <b>advanced</b> are skipped and do not use a slot. Of the remaining teams the top <b>y</b> are highlighted gold, and the next <b>x − y</b> are highlighted bronze.
         </p>
       </footer>
     </div>
@@ -619,7 +619,7 @@ function sortedTeams(N) {
 
 /**
  * Advancement status map: id -> "gold" | "bronze".
- * Teams marked "already advanced" are excluded from the ranking, so they do
+ * Teams marked "advanced" are excluded from the ranking, so they do
  * not consume a slot. Top y of the eligible teams are gold, the next
  * (x - y) are bronze.
  */
@@ -689,7 +689,7 @@ function makeRow(t) {
   tr.dataset.id = t.id;
   tr.innerHTML =
     '<td class="c-team"><input class="in" type="number" inputmode="numeric" data-field="number" value="' + esc(t.number) + '" placeholder="12345" aria-label="Team number"></td>' +
-    '<td class="c-check"><label class="adv-check"><input type="checkbox" data-field="alreadyAdvanced" aria-label="Team already advanced"' + (t.alreadyAdvanced ? " checked" : "") + '><span>Already advanced</span></label></td>' +
+    '<td class="c-check"><label class="adv-check"><input type="checkbox" data-field="alreadyAdvanced" aria-label="Team advanced"' + (t.alreadyAdvanced ? " checked" : "") + '><span>Advanced</span></label></td>' +
     '<td class="c-rank"><input class="in" type="number" inputmode="numeric" min="1" data-field="rank" value="' + esc(t.rank) + '" placeholder="–" aria-label="Rank"></td>' +
     '<td class="num cell-qual" data-cell="qual"></td>' +
     '<td class="c-all"><input class="in" type="number" inputmode="numeric" min="0" data-field="alliance" value="' + esc(t.alliance) + '" placeholder="0" aria-label="Alliance number"></td>' +
@@ -810,7 +810,7 @@ function renderAdvanceLegend() {
 
   let html = '<span class="gold-dot"></span>Top <b>' + y + '</b> eligible team' + (y === 1 ? "" : "s") + ' → gold';
   html += ' &nbsp;·&nbsp; <span class="bronze-dot"></span>next <b>' + bronze + '</b> → bronze';
-  html += '<br>Teams marked <b>already advanced</b> are skipped and do not use an advancement slot.';
+  html += '<br>Teams marked <b>advanced</b> are skipped and do not use an advancement slot.';
   if (clamped) {
     html += ' <span class="warn">Gold count (y) is larger than the number advancing (x) — it has been clamped to ' + x + '.</span>';
   }
@@ -990,7 +990,7 @@ $("#doImport").addEventListener("click", () => {
 $("#exportBtn").addEventListener("click", () => {
   const N = getN();
   const status = advancementStatus(N);
-  const header = ["Team", "Rank", "QualPts", "AllianceNum", "AlliancePts", "PlayoffLevel", "PlayoffPts", "AwardPts", "Total", "AlreadyAdvanced", "Advancement"];
+  const header = ["Team", "Rank", "QualPts", "AllianceNum", "AlliancePts", "PlayoffLevel", "PlayoffPts", "AwardPts", "Total", "Advanced", "Advancement"];
   const rows = [header.join(",")];
 
   for (const t of sortedTeams(N)) {
@@ -1053,7 +1053,7 @@ $("#teamBody").addEventListener("input", (e) => {
   save();
 });
 
-// "Already advanced" checkbox
+// "Advanced" checkbox
 $("#teamBody").addEventListener("change", (e) => {
   const el = e.target;
   if (el.type !== "checkbox" || el.dataset.field !== "alreadyAdvanced") return;
