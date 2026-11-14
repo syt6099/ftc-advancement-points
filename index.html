@@ -129,20 +129,27 @@
 
   /* ---------- Table ---------- */
   .table-wrap { overflow-x: auto; margin: 0 -18px; padding: 0 18px; }
-  table { width: 100%; min-width: 980px; border-collapse: collapse; }
+  table {
+    width: 100%; min-width: 0; table-layout: fixed;
+    border-collapse: collapse;
+  }
 
   thead th {
-    font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em;
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: .03em;
     color: var(--muted); font-weight: 700; text-align: left;
-    padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap;
+    padding: 7px 6px; border-bottom: 1px solid var(--border);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   thead th[data-sort] { cursor: pointer; user-select: none; }
   thead th[data-sort]:hover { color: var(--accent); }
   thead th.sorted-asc, thead th.sorted-desc { color: var(--accent); }
-  thead th.sorted-asc::after { content: " ▲"; font-size: 9px; }
-  thead th.sorted-desc::after { content: " ▼"; font-size: 9px; }
+  thead th.sorted-asc::after { content: " ▲"; font-size: 8px; }
+  thead th.sorted-desc::after { content: " ▼"; font-size: 8px; }
 
-  tbody td { padding: 5px 10px; border-bottom: 1px solid var(--border); }
+  tbody td {
+    padding: 3px 6px; border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
   tbody tr:hover { background: var(--accent-soft); }
   tbody tr.row-gold { background: var(--gold-bg); box-shadow: inset 3px 0 0 var(--gold-line); }
   tbody tr.row-gold:hover { background: var(--gold-bg-hover); }
@@ -158,46 +165,55 @@
   .num { text-align: right; font-variant-numeric: tabular-nums; }
   th.num { text-align: right; }
 
-  .c-team { width: 118px; }
-  .c-check { width: 156px; }
-  .c-rank { width: 86px; }
-  .c-qual { width: 92px; }
-  .c-all { width: 100px; }
-  .c-po { width: 104px; }
-  .c-award { width: 92px; }
-  .c-del { width: 42px; text-align: center; }
+  /* Compact fixed widths — sum ≈ 674px, fits the ~1044px table area */
+  .c-team   { width: 76px; }
+  .c-check  { width: 84px; }
+  .c-rank   { width: 56px; }
+  .c-qual   { width: 60px; }
+  .c-allnum { width: 58px; }
+  .c-allpts { width: 62px; }
+  .c-polvl  { width: 58px; }
+  .c-ppts   { width: 62px; }
+  .c-award  { width: 60px; }
+  .c-total  { width: 66px; }
+  .c-del    { width: 32px; text-align: center; }
 
   .adv-check {
-    display: inline-flex; align-items: center; gap: 7px;
-    font-size: 12px; color: var(--muted); cursor: pointer; user-select: none; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; color: var(--muted); cursor: pointer;
+    user-select: none; white-space: nowrap; max-width: 100%;
   }
-  .adv-check input { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; margin: 0; flex: none; }
+  .adv-check input {
+    accent-color: var(--accent); width: 13px; height: 13px;
+    cursor: pointer; margin: 0; flex: none;
+  }
   .adv-check input:checked + span { color: var(--accent); font-weight: 600; }
 
   .in {
-    width: 100%; min-width: 56px; padding: 6px 8px; border-radius: 6px;
-    background: transparent; border: 1px solid transparent; color: inherit; font: inherit;
+    width: 100%; min-width: 0; padding: 4px 5px; border-radius: 5px;
+    background: transparent; border: 1px solid transparent;
+    color: inherit; font: inherit; font-size: 13px;
     font-variant-numeric: tabular-nums;
   }
   .in:hover { border-color: var(--border); background: var(--field); }
   .in:focus {
     outline: none; border-color: var(--accent); background: var(--field);
-    box-shadow: 0 0 0 3px var(--accent-soft);
+    box-shadow: 0 0 0 2px var(--accent-soft);
   }
   input[type="number"]::-webkit-outer-spin-button,
   input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 
-  .cell-qual { font-weight: 600; }
-  .cell-total { font-weight: 700; color: var(--accent); }
-  tbody tr.row-gold .cell-total { color: var(--gold-text); }
+  .cell-qual  { font-weight: 600; font-size: 13px; }
+  .cell-total { font-weight: 700; font-size: 13px; color: var(--accent); }
+  tbody tr.row-gold   .cell-total { color: var(--gold-text); }
   tbody tr.row-bronze .cell-total { color: var(--bronze-text); }
   .muted { color: var(--muted); font-weight: 400; }
-  .warn { color: var(--warn); }
+  .warn  { color: var(--warn); }
 
   .del {
     border: none; background: transparent; color: var(--muted); cursor: pointer;
-    font-size: 14px; padding: 4px 6px; border-radius: 6px; line-height: 1;
+    font-size: 13px; padding: 2px 4px; border-radius: 4px; line-height: 1;
   }
   .del:hover { color: var(--danger); background: rgba(192, 57, 43, .12); }
 
@@ -350,17 +366,17 @@
           <table id="teamTable">
             <thead>
               <tr>
-                <th class="c-team" data-sort="number">Team #</th>
-                <th class="c-check">Advanced</th>
-                <th class="c-rank" data-sort="rank">Rank</th>
-                <th class="c-qual num" data-sort="qual">Qual pts</th>
-                <th class="c-all num">Alliance #</th>
-                <th class="c-all num" data-sort="alliancePts">Alliance pts</th>
-                <th class="c-po num">Playoff lvl</th>
-                <th class="c-po num" data-sort="playoffPts">Playoff pts</th>
-                <th class="c-award num" data-sort="award">Awards</th>
-                <th class="c-all num" data-sort="total">Total</th>
-                <th class="c-del"></th>
+                <th class="c-team" data-sort="number" title="Team number">Team</th>
+                <th class="c-check" title="Already advanced">Advanced</th>
+                <th class="c-rank" data-sort="rank" title="Qualification rank">Rank</th>
+                <th class="c-qual num" data-sort="qual" title="Qualification points">Qual</th>
+                <th class="c-allnum num" title="Alliance number">All. #</th>
+                <th class="c-allpts num" data-sort="alliancePts" title="Alliance points">All. pts</th>
+                <th class="c-polvl num" title="Playoff level">PO lvl</th>
+                <th class="c-ppts num" data-sort="playoffPts" title="Playoff points">PO pts</th>
+                <th class="c-award num" data-sort="award" title="Award points">Award</th>
+                <th class="c-total num" data-sort="total" title="Total points">Total</th>
+                <th class="c-del" title="Remove"></th>
               </tr>
             </thead>
             <tbody id="teamBody"></tbody>
@@ -693,9 +709,9 @@ function makeRow(t) {
     '<td class="c-check"><label class="adv-check"><input type="checkbox" data-field="alreadyAdvanced" aria-label="Team advanced"' + (t.alreadyAdvanced ? " checked" : "") + '><span>Advanced</span></label></td>' +
     '<td class="c-rank"><input class="in" type="number" inputmode="numeric" min="1" data-field="rank" value="' + esc(t.rank) + '" placeholder="–" aria-label="Rank"></td>' +
     '<td class="num cell-qual" data-cell="qual"></td>' +
-    '<td class="c-all"><input class="in" type="number" inputmode="numeric" min="0" data-field="alliance" value="' + esc(t.alliance) + '" placeholder="0" aria-label="Alliance number"></td>' +
+    '<td class="c-allnum"><input class="in" type="number" inputmode="numeric" min="0" data-field="alliance" value="' + esc(t.alliance) + '" placeholder="0" aria-label="Alliance number"></td>' +
     '<td class="num" data-cell="alliancePts"></td>' +
-    '<td class="c-po"><input class="in" type="number" inputmode="numeric" min="0" data-field="playoff" value="' + esc(t.playoff) + '" placeholder="0" aria-label="Playoff level"></td>' +
+    '<td class="c-polvl"><input class="in" type="number" inputmode="numeric" min="0" data-field="playoff" value="' + esc(t.playoff) + '" placeholder="0" aria-label="Playoff level"></td>' +
     '<td class="num" data-cell="playoffPts"></td>' +
     '<td class="c-award"><input class="in" type="number" inputmode="numeric" data-field="award" value="' + esc(t.award) + '" placeholder="0" aria-label="Award points"></td>' +
     '<td class="num cell-total" data-cell="total"></td>' +
