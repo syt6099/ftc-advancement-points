@@ -19,6 +19,10 @@
     --gold-bg-hover: #ffec9e;
     --gold-line: #e3b100;
     --gold-text: #8a6400;
+    --bronze-bg: #fbe6d2;
+    --bronze-bg-hover: #f7d9bd;
+    --bronze-line: #b26a2c;
+    --bronze-text: #7a4416;
     --danger: #c0392b;
     --warn: #b26a00;
   }
@@ -105,6 +109,11 @@
     background: var(--gold-bg); border: 1px solid var(--gold-line);
     vertical-align: -2px; margin-right: 5px;
   }
+  .bronze-dot {
+    display: inline-block; width: 12px; height: 12px; border-radius: 3px;
+    background: var(--bronze-bg); border: 1px solid var(--bronze-line);
+    vertical-align: -2px; margin-right: 5px;
+  }
 
   /* ---------- Import panel ---------- */
   .import-panel {
@@ -120,7 +129,7 @@
 
   /* ---------- Table ---------- */
   .table-wrap { overflow-x: auto; margin: 0 -18px; padding: 0 18px; }
-  table { width: 100%; min-width: 820px; border-collapse: collapse; }
+  table { width: 100%; min-width: 980px; border-collapse: collapse; }
 
   thead th {
     font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em;
@@ -135,20 +144,35 @@
 
   tbody td { padding: 5px 10px; border-bottom: 1px solid var(--border); }
   tbody tr:hover { background: var(--accent-soft); }
-  tbody tr.row-advanced { background: var(--gold-bg); box-shadow: inset 3px 0 0 var(--gold-line); }
-  tbody tr.row-advanced:hover { background: var(--gold-bg-hover); }
+  tbody tr.row-gold { background: var(--gold-bg); box-shadow: inset 3px 0 0 var(--gold-line); }
+  tbody tr.row-gold:hover { background: var(--gold-bg-hover); }
+  tbody tr.row-bronze { background: var(--bronze-bg); box-shadow: inset 3px 0 0 var(--bronze-line); }
+  tbody tr.row-bronze:hover { background: var(--bronze-bg-hover); }
+  tbody tr.row-already { background: #e8efea; }
+  tbody tr.row-already:hover { background: #dfe8e1; }
+  tbody tr.row-already .in,
+  tbody tr.row-already .cell-qual,
+  tbody tr.row-already .cell-total { color: var(--muted); }
   tbody tr:last-child td { border-bottom: none; }
 
   .num { text-align: right; font-variant-numeric: tabular-nums; }
   th.num { text-align: right; }
 
   .c-team { width: 118px; }
+  .c-check { width: 156px; }
   .c-rank { width: 86px; }
   .c-qual { width: 92px; }
   .c-all { width: 100px; }
   .c-po { width: 104px; }
   .c-award { width: 92px; }
   .c-del { width: 42px; text-align: center; }
+
+  .adv-check {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 12px; color: var(--muted); cursor: pointer; user-select: none; white-space: nowrap;
+  }
+  .adv-check input { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; margin: 0; flex: none; }
+  .adv-check input:checked + span { color: var(--accent); font-weight: 600; }
 
   .in {
     width: 100%; min-width: 56px; padding: 6px 8px; border-radius: 6px;
@@ -166,7 +190,8 @@
 
   .cell-qual { font-weight: 600; }
   .cell-total { font-weight: 700; color: var(--accent); }
-  tr.row-advanced .cell-total { color: var(--gold-text); }
+  tbody tr.row-gold .cell-total { color: var(--gold-text); }
+  tbody tr.row-bronze .cell-total { color: var(--bronze-text); }
   .muted { color: var(--muted); font-weight: 400; }
   .warn { color: var(--warn); }
 
@@ -269,14 +294,16 @@
             <span>Auto — use number of teams in the list</span>
           </label>
           <div class="field">
-            <label for="advanceInput">Teams advancing</label>
-            <input id="advanceInput" class="small" type="number" min="0" step="1" value="3" />
+            <label for="advanceInput">Advancing (x)</label>
+            <input id="advanceInput" class="small" type="number" min="0" step="1" value="3" title="Total number of teams that advance" />
+          </div>
+          <div class="field">
+            <label for="goldInput">Reserved / gold (y)</label>
+            <input id="goldInput" class="small" type="number" min="0" step="1" value="2" title="Top y of the advancing teams are reserved for a particular event (gold)" />
           </div>
           <div class="hint" id="nHint"></div>
         </div>
-        <p class="hint" style="margin:12px 0 0">
-          <span class="gold-dot"></span>The top <b id="advanceHint">3</b> teams by total points are highlighted in gold (tie-breaks included).
-        </p>
+        <p class="hint" id="advanceLegend" style="margin:12px 0 0"></p>
       </section>
 
       <!-- ===== Teams ===== -->
@@ -323,6 +350,7 @@
             <thead>
               <tr>
                 <th class="c-team" data-sort="number">Team #</th>
+                <th class="c-check">Already advanced</th>
                 <th class="c-rank" data-sort="rank">Rank</th>
                 <th class="c-qual num" data-sort="qual">Qual pts</th>
                 <th class="c-all num">Alliance #</th>
@@ -355,6 +383,9 @@
         </p>
         <p>
           When sorting by <b>total points</b>, ties are broken by: award points → playoff points → alliance points → higher qualification rank (smaller rank number).
+        </p>
+        <p>
+          For advancement, teams marked <b>already advanced</b> are skipped and do not use a slot. Of the remaining teams the top <b>y</b> are highlighted gold, and the next <b>x − y</b> are highlighted bronze.
         </p>
       </footer>
     </div>
@@ -436,10 +467,11 @@ const AWARDS = ["Judges", "Design", "Reach", "Control", "Innovate", "Sustain", "
 const EPS = 1e-9;
 
 const state = {
-  teams: [],          // { id, number, rank, alliance, playoff, award }
+  teams: [],          // { id, number, rank, alliance, playoff, award, alreadyAdvanced }
   autoN: true,
   manualN: "",        // string as typed
-  advanceCount: "3",  // string as typed
+  advanceCount: "3",  // x — total teams advancing
+  advanceGold: "2",   // y — top y of them get gold (rest bronze)
   sortKey: "total",
   sortDir: "desc",
   struckAwards: []    // award names
@@ -474,6 +506,11 @@ function getN() {
 
 function getAdvanceCount() {
   const n = parseInt(state.advanceCount, 10);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+function getGoldCount() {
+  const n = parseInt(state.advanceGold, 10);
   return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
@@ -580,15 +617,26 @@ function sortedTeams(N) {
   });
 }
 
-/** Ids of the teams currently in the advancing (golden) positions. */
-function advancedIds(N) {
-  const n = getAdvanceCount();
-  const set = new Set();
-  if (!n || !state.teams.length) return set;
-  const ranked = state.teams.slice().sort((a, b) => compareTotal(a, b, N));
-  const lim = Math.min(n, ranked.length);
-  for (let i = 0; i < lim; i++) set.add(ranked[i].id);
-  return set;
+/**
+ * Advancement status map: id -> "gold" | "bronze".
+ * Teams marked "already advanced" are excluded from the ranking, so they do
+ * not consume a slot. Top y of the eligible teams are gold, the next
+ * (x - y) are bronze.
+ */
+function advancementStatus(N) {
+  const map = new Map();
+  const x = getAdvanceCount();
+  const y = Math.min(getGoldCount(), x);
+  if (!x || !state.teams.length) return map;
+
+  const eligible = state.teams.filter((t) => !t.alreadyAdvanced);
+  const ranked = eligible.slice().sort((a, b) => compareTotal(a, b, N));
+  const lim = Math.min(x, ranked.length);
+
+  for (let i = 0; i < lim; i++) {
+    map.set(ranked[i].id, i < y ? "gold" : "bronze");
+  }
+  return map;
 }
 
 /* =========================================================
@@ -610,14 +658,21 @@ function load() {
         rank: t.rank ?? "",
         alliance: t.alliance ?? "",
         playoff: t.playoff ?? "",
-        award: t.award ?? ""
+        award: t.award ?? "",
+        alreadyAdvanced: !!t.alreadyAdvanced
       }));
     }
     if (typeof s.autoN === "boolean") state.autoN = s.autoN;
     if (typeof s.manualN === "string") state.manualN = s.manualN;
     else if (s.manualN != null) state.manualN = String(s.manualN);
+
     if (typeof s.advanceCount === "string") state.advanceCount = s.advanceCount;
     else if (s.advanceCount != null) state.advanceCount = String(s.advanceCount);
+
+    if (typeof s.advanceGold === "string") state.advanceGold = s.advanceGold;
+    else if (s.advanceGold != null) state.advanceGold = String(s.advanceGold);
+    else if (typeof s.advanceCount === "string") state.advanceGold = s.advanceCount; // backward compatible
+
     if (typeof s.sortKey === "string") state.sortKey = s.sortKey;
     if (s.sortDir === "asc" || s.sortDir === "desc") state.sortDir = s.sortDir;
     if (Array.isArray(s.struckAwards)) {
@@ -634,6 +689,7 @@ function makeRow(t) {
   tr.dataset.id = t.id;
   tr.innerHTML =
     '<td class="c-team"><input class="in" type="number" inputmode="numeric" data-field="number" value="' + esc(t.number) + '" placeholder="12345" aria-label="Team number"></td>' +
+    '<td class="c-check"><label class="adv-check"><input type="checkbox" data-field="alreadyAdvanced" aria-label="Team already advanced"' + (t.alreadyAdvanced ? " checked" : "") + '><span>Already advanced</span></label></td>' +
     '<td class="c-rank"><input class="in" type="number" inputmode="numeric" min="1" data-field="rank" value="' + esc(t.rank) + '" placeholder="–" aria-label="Rank"></td>' +
     '<td class="num cell-qual" data-cell="qual"></td>' +
     '<td class="c-all"><input class="in" type="number" inputmode="numeric" min="0" data-field="alliance" value="' + esc(t.alliance) + '" placeholder="0" aria-label="Alliance number"></td>' +
@@ -664,11 +720,11 @@ function renderRows() {
   updateComputed();
 }
 
-/** Recomputes every derived cell + the golden highlight without touching inputs. */
+/** Recomputes every derived cell + the advancement highlight without touching inputs. */
 function updateComputed() {
   const N = getN();
   const tbody = $("#teamBody");
-  const goldIds = advancedIds(N);
+  const status = advancementStatus(N);
 
   for (const tr of Array.from(tbody.children)) {
     const t = state.teams.find((x) => x.id === tr.dataset.id);
@@ -698,7 +754,10 @@ function updateComputed() {
     tr.querySelector('[data-cell="playoffPts"]').textContent = fmt(c.playoffPts);
     tr.querySelector('[data-cell="total"]').textContent = fmt(c.total);
 
-    tr.classList.toggle("row-advanced", goldIds.has(t.id));
+    const st = status.get(t.id) || "";
+    tr.classList.toggle("row-gold", st === "gold");
+    tr.classList.toggle("row-bronze", st === "bronze");
+    tr.classList.toggle("row-already", !!t.alreadyAdvanced);
   }
 }
 
@@ -742,6 +801,22 @@ function renderAwards() {
   }
 }
 
+function renderAdvanceLegend() {
+  const el = $("#advanceLegend");
+  const x = getAdvanceCount();
+  const y = Math.min(getGoldCount(), x);
+  const bronze = Math.max(0, x - y);
+  const clamped = getGoldCount() > x;
+
+  let html = '<span class="gold-dot"></span>Top <b>' + y + '</b> eligible team' + (y === 1 ? "" : "s") + ' → gold';
+  html += ' &nbsp;·&nbsp; <span class="bronze-dot"></span>next <b>' + bronze + '</b> → bronze';
+  html += '<br>Teams marked <b>already advanced</b> are skipped and do not use an advancement slot.';
+  if (clamped) {
+    html += ' <span class="warn">Gold count (y) is larger than the number advancing (x) — it has been clamped to ' + x + '.</span>';
+  }
+  el.innerHTML = html;
+}
+
 function syncN() {
   const input = $("#nInput");
   input.disabled = state.autoN;
@@ -755,8 +830,9 @@ function syncN() {
     hint.textContent = n > 0 ? "N = " + n + " (manual)." : "Enter the total number of participants.";
   }
 
-  const adv = getAdvanceCount();
-  $("#advanceHint").textContent = adv || 0;
+  $("#advanceInput").value = state.advanceCount;
+  $("#goldInput").value = state.advanceGold;
+  renderAdvanceLegend();
 }
 
 function updateSortUI() {
@@ -789,7 +865,8 @@ function addTeam(data) {
     rank: data?.rank ?? "",
     alliance: data?.alliance ?? "",
     playoff: data?.playoff ?? "",
-    award: data?.award ?? ""
+    award: data?.award ?? "",
+    alreadyAdvanced: false
   };
   state.teams.push(t);
   return t;
@@ -831,10 +908,17 @@ $("#nInput").addEventListener("input", (e) => {
   save();
 });
 
-// --- Teams advancing (golden highlight) ---
+// --- Advancing x / gold y (highlight) ---
 $("#advanceInput").addEventListener("input", (e) => {
   state.advanceCount = e.target.value;
-  $("#advanceHint").textContent = getAdvanceCount();
+  renderAdvanceLegend();
+  updateComputed();
+  save();
+});
+
+$("#goldInput").addEventListener("input", (e) => {
+  state.advanceGold = e.target.value;
+  renderAdvanceLegend();
   updateComputed();
   save();
 });
@@ -905,8 +989,8 @@ $("#doImport").addEventListener("click", () => {
 
 $("#exportBtn").addEventListener("click", () => {
   const N = getN();
-  const goldIds = advancedIds(N);
-  const header = ["Team", "Rank", "QualPts", "AllianceNum", "AlliancePts", "PlayoffLevel", "PlayoffPts", "AwardPts", "Total", "Advancing"];
+  const status = advancementStatus(N);
+  const header = ["Team", "Rank", "QualPts", "AllianceNum", "AlliancePts", "PlayoffLevel", "PlayoffPts", "AwardPts", "Total", "AlreadyAdvanced", "Advancement"];
   const rows = [header.join(",")];
 
   for (const t of sortedTeams(N)) {
@@ -917,7 +1001,8 @@ $("#exportBtn").addEventListener("click", () => {
       t.alliance, fmt(c.alliancePts),
       t.playoff, fmt(c.playoffPts),
       fmt(c.award), fmt(c.total),
-      goldIds.has(t.id) ? "yes" : ""
+      t.alreadyAdvanced ? "yes" : "",
+      status.get(t.id) || ""
     ].join(","));
   }
 
@@ -951,17 +1036,35 @@ $("#clearAwards").addEventListener("click", () => {
 });
 
 // --- Table editing (delegated) ---
+// Text/number fields
 $("#teamBody").addEventListener("input", (e) => {
-  const field = e.target.dataset?.field;
-  if (!field) return;
+  const el = e.target;
+  const field = el.dataset?.field;
+  if (!field || el.type === "checkbox") return;
 
-  const tr = e.target.closest("tr[data-id]");
+  const tr = el.closest("tr[data-id]");
   if (!tr) return;
 
   const t = state.teams.find((x) => x.id === tr.dataset.id);
   if (!t) return;
 
-  t[field] = e.target.value;
+  t[field] = el.value;
+  updateComputed();
+  save();
+});
+
+// "Already advanced" checkbox
+$("#teamBody").addEventListener("change", (e) => {
+  const el = e.target;
+  if (el.type !== "checkbox" || el.dataset.field !== "alreadyAdvanced") return;
+
+  const tr = el.closest("tr[data-id]");
+  if (!tr) return;
+
+  const t = state.teams.find((x) => x.id === tr.dataset.id);
+  if (!t) return;
+
+  t.alreadyAdvanced = el.checked;
   updateComputed();
   save();
 });
